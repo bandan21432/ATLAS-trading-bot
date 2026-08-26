@@ -1,0 +1,14 @@
+
+.env
+
+
+atlas.db
+
+
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+
+backtest_chart.png

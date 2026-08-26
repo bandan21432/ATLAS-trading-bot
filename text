@@ -1,0 +1,169 @@
+# ATLAS — AI-Powered Auto Trading Platform
+
+A personal project combining a Python trading bot, real broker integrations, a live dashboard, and an AI assistant — built as a learning exercise in full-stack development, APIs, and algorithmic trading concepts.
+
+Inspired by the idea of "Bloomberg + ChatGPT + Robinhood" — a single console for watching a strategy trade, understanding why it made a decision, and reviewing performance.
+
+---
+
+## Features
+
+- **Automated trading bot** — moving-average crossover strategy with configurable risk management (position sizing, stop-loss)
+- **Real broker integrations** — connects to both **Alpaca** (paper trading, REST API) and **Interactive Brokers** (via TWS/IB Gateway) for real account data and order placement
+- **Live dashboard** — Overview (price chart, signal, manual buy/sell), P&L & News, Notifications, Price Forecast, and an AI Assistant, all in one console
+- **Real historical backtesting** — tests the strategy against real market data (via `yfinance`), reporting win rate, total return, max drawdown, and a buy-and-hold benchmark for comparison
+- **Persistent storage** — SQLite database for user accounts and full trade history
+- **Secure authentication** — bcrypt password hashing, session tokens
+- **AI Assistant** — real LLM-backed chat (via Groq's free API) that explains the bot's signals, risk settings, and trading concepts, grounded in the bot's actual configuration
+- **Price forecasting** — statistical projections (EMA trend, linear regression, Monte Carlo) across multiple time horizons, with a confidence band visualization
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Backend | Python, FastAPI |
+| Database | SQLite |
+| Frontend | HTML/CSS/JavaScript (no framework — vanilla, single-file pages) |
+| Auth | bcrypt password hashing, token-based sessions |
+| Brokers | Alpaca (`alpaca-py`), Interactive Brokers (`ib_insync`) |
+| Backtesting | `yfinance`, `pandas`, `matplotlib` |
+| AI Assistant | Groq API (Llama 3.3 70B) |
+
+---
+
+## Project Structure
+
+```
+├── server.py                    # FastAPI backend — all API routes
+├── db.py                        # SQLite persistence layer (users, trades)
+├── alpaca_client.py             # Alpaca broker integration
+├── ibkr_client.py                # Interactive Brokers integration
+├── backtest.py                  # Historical strategy backtesting (standalone script)
+├── test_alpaca_connection.py    # Diagnostic script for troubleshooting Alpaca setup
+├── auto_trader_skeleton.py      # Core bot logic reference (strategy/risk/execution classes)
+├── login.html                   # Sign-in / sign-up page
+├── auto_trader_dashboard.html   # Main dashboard (all views)
+└── atlas.db                     # SQLite database (created automatically on first run)
+```
+
+---
+
+## Setup
+
+### 1. Install dependencies
+```bash
+pip install fastapi uvicorn bcrypt alpaca-py ib_insync yfinance pandas matplotlib groq
+```
+
+### 2. Set environment variables
+This project uses environment variables for all credentials — nothing is hard-coded.
+
+**Alpaca** (get free paper trading keys at [alpaca.markets](https://alpaca.markets) → Paper Trading → API Keys):
+```powershell
+$env:ALPACA_API_KEY="your_key"
+$env:ALPACA_SECRET_KEY="your_secret"
+```
+
+**Groq** (free API key at [console.groq.com](https://console.groq.com)):
+```powershell
+$env:GROQ_API_KEY="your_key"
+```
+
+**Interactive Brokers** (optional): requires TWS or IB Gateway running locally with API access enabled. No key needed — it connects to `127.0.0.1:7497` by default.
+
+### 3. Run the server
+```bash
+python -m uvicorn server:app --reload
+```
+Then open **http://127.0.0.1:8000/** in a browser.
+
+### 4. Run a backtest (optional, standalone)
+```bash
+python backtest.py --symbol AAPL --start 2023-01-01 --end 2024-06-01
+```
+
+---
+
+## What's Real vs. Simulated
+
+Being upfront about this matters for evaluating the project honestly:
+
+| Component | Status |
+|---|---|
+| Broker connections & order placement | **Real** — actual Alpaca/IBKR paper trading accounts |
+| Trade history & user accounts | **Real** — persisted in SQLite |
+| Historical backtest | **Real** — actual market data via yfinance |
+| AI Assistant | **Real** — live LLM calls via Groq |
+| Live dashboard price chart | **Simulated** — random-walk demo data, not a live market feed |
+| Price Forecast page | **Simulated math** — EMA/linear regression/Monte Carlo projections, not a trained ML model |
+| Automated bot's live trading loop | **Not connected to a live feed** — the strategy logic is implemented and backtested successfully, but the dashboard's automated signal currently reacts to simulated ticks rather than the real Alpaca/IBKR price stream |
+
+---
+
+## Known Limitations
+
+- No real-time market data feed powering the *live* automated bot loop (backtesting uses real data; the live dashboard chart does not, yet)
+- No role-based access control — every logged-in user currently has the same permissions
+- Session tokens are stored in memory and don't survive a server restart (trade history and user accounts do, since those are in the database)
+- The AI Assistant has general context about the bot's strategy but doesn't yet see live account state (balance, open positions) when answering
+- No automated test suite
+- Not deployed to a live server — runs locally only
+
+---
+
+
+This is everything you need to know to run the website
+
+Bare root URL (http://127.0.0.1:8000/) redirects straight to the
+login page, so you don't have to remember "/login.html" every time. 
+python -m uvicorn server:app --reload
+type control c to end run time
+
+to test alpaca connection 
+Run:
+    python test_alpaca_connection.py
+Backtest — runs the moving-average crossover strategy against REAL
+historical price data (via yfinance), instead of the simulated random
+walk the live dashboard uses. This is what actually proves whether
+the strategy has any edge.
+ 
+Run:
+    python backtest.py
+    python backtest.py --symbol AAPL --start 2022-01-01 --end 2024-01-01
+    python backtest.py --symbol BTC-USD --fast 10 --slow 30
+
+Setup:
+    1. Create a free account at https://alpaca.markets
+    2. Generate PAPER trading API keys from your dashboard
+       (Paper Trading -> API Keys), not live keys, while testing
+    3. Set them as environment variables before running the server:
+    
+       Windows (PowerShell):
+           $env:ALPACA_API_KEY="your_key"
+           $env:ALPACA_SECRET_KEY="your_secret"
+
+    sometimes you need to enter or generate your keys again\
+    # Set ALPACA_API_KEY / ALPACA_SECRET_KEY as environment variables
+    # before starting the server. Defaults to paper trading.
+
+
+Real trained ML forecast model — trains a regression model on actual
+historical price data (via yfinance) to predict future price movement,
+replacing the illustrative EMA/linear/Monte Carlo math with something
+genuinely fit to data and evaluated on a held-out test set.
+
+
+Model: Gradient Boosting Regressor predicting next-day return, using
+engineered features (lagged returns, moving averages, volatility, RSI).
+Forecasts are generated by predicting one step ahead, applying that
+return, then feeding the result back in to predict the next step
+(a walk-forward projection).
+
+IMPORTANT: This is still a simple, honestly-evaluated model for a
+learning project — not a production trading signal. Its test-set R^2
+and directional accuracy are reported transparently precisely so you
+don't overstate what it can actually do. Markets are extremely hard
+to predict; a model with modest but positive directional accuracy on
+held-out data is a reasonable, defensible result for this project.
