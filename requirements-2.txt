@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+bcrypt
+pydantic
+alpaca-py
+ib_insync
+yfinance
+pandas
+numpy
+scikit-learn
+matplotlib
+groq
