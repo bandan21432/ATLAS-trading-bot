@@ -1,11 +1,14 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ATLAS — Sign In</title>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
 <style>
   :root{
     --bg:#0B0E14;
@@ -19,60 +22,112 @@
     --amber-dim:rgba(242,169,59,0.12);
     --green:#3FBF7F;
     --red:#E5484D;
-    --font-display:'Space Grotesk', sans-serif;
-    --font-body:'Inter', sans-serif;
-    --font-mono:'IBM Plex Mono', monospace;
+
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'IBM Plex Mono',monospace;
   }
-  *{ margin:0; padding:0; box-sizing:border-box; }
+
+  *{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+  }
+
+  html{
+    min-height:100%;
+    background:var(--bg);
+  }
+
   body{
     background:var(--bg);
     color:var(--text);
     font-family:var(--font-body);
     min-height:100vh;
+    min-height:100dvh;
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:24px;
+    padding:80px 16px 30px;
+    overflow-x:hidden;
   }
-  a:focus-visible, button:focus-visible, input:focus-visible{
+
+  button,
+  input{
+    font:inherit;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible{
     outline:2px solid var(--amber);
     outline-offset:2px;
   }
+
   @media (prefers-reduced-motion: reduce){
-    *{ animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+    *{
+      animation-duration:0.01ms !important;
+      transition-duration:0.01ms !important;
+    }
   }
+
+  /* =========================
+     BRAND
+  ========================= */
 
   .brand-row{
     position:fixed;
-    top:24px; left:28px;
-    display:flex; align-items:center; gap:10px;
+    top:20px;
+    left:22px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    z-index:20;
   }
+
   .brand-mark{
-    width:26px; height:26px;
+    width:27px;
+    height:27px;
     border:1.5px solid var(--amber);
     border-radius:4px;
-    display:flex; align-items:center; justify-content:center;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     font-family:var(--font-mono);
     font-size:12px;
     color:var(--amber);
   }
-  .brand-name{ font-family:var(--font-display); font-weight:600; font-size:16px; letter-spacing:0.5px; }
 
-  
+  .brand-name{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:16px;
+    letter-spacing:.5px;
+  }
+
+  /* =========================
+     AUTH SCENE
+  ========================= */
+
   .auth-scene{
     width:100%;
     max-width:860px;
     height:520px;
     perspective:1800px;
   }
+
   .auth-card{
     position:relative;
-    width:100%; height:100%;
+    width:100%;
+    height:100%;
     transform-style:preserve-3d;
     transition:transform 900ms cubic-bezier(.65,0,.35,1);
     border-radius:10px;
   }
-  .auth-card.flipped{ transform:rotateY(180deg); }
+
+  .auth-card.flipped{
+    transform:rotateY(180deg);
+  }
 
   .auth-face{
     position:absolute;
@@ -80,16 +135,20 @@
     display:grid;
     grid-template-columns:1fr 1fr;
     backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
     border-radius:10px;
     overflow:hidden;
     border:1px solid var(--border);
+    background:var(--panel);
   }
-  .auth-face.back{ transform:rotateY(180deg); }
 
-  @media (max-width:720px){
-    .auth-face{ grid-template-columns:1fr; }
-    .side-panel{ display:none; }
+  .auth-face.back{
+    transform:rotateY(180deg);
   }
+
+  /* =========================
+     FORM PANEL
+  ========================= */
 
   .form-panel{
     background:var(--panel);
@@ -97,7 +156,9 @@
     display:flex;
     flex-direction:column;
     justify-content:center;
+    min-width:0;
   }
+
   .eyebrow{
     font-family:var(--font-mono);
     font-size:10px;
@@ -106,15 +167,19 @@
     color:var(--amber);
     margin-bottom:10px;
   }
+
   h1{
     font-family:var(--font-display);
     font-size:26px;
+    line-height:1.2;
     font-weight:600;
-    margin-bottom:6px;
+    margin-bottom:7px;
   }
+
   .subhead{
     font-family:var(--font-body);
     font-size:13px;
+    line-height:1.5;
     color:var(--muted-2);
     margin-bottom:28px;
   }
@@ -123,61 +188,96 @@
     display:block;
     font-family:var(--font-mono);
     font-size:10.5px;
-    letter-spacing:0.5px;
+    letter-spacing:.5px;
     text-transform:uppercase;
     color:var(--muted);
     margin-bottom:7px;
   }
-  .field{ margin-bottom:18px; }
-  input[type="email"], input[type="password"]{
+
+  .field{
+    margin-bottom:18px;
+  }
+
+  input[type="email"],
+  input[type="password"]{
     width:100%;
+    height:44px;
     background:var(--panel-2);
     border:1px solid var(--border);
     color:var(--text);
     font-family:var(--font-mono);
-    font-size:13.5px;
+    font-size:13px;
     padding:11px 13px;
     border-radius:5px;
-    transition:border-color 0.15s ease;
+    transition:border-color .15s ease;
   }
-  input::placeholder{ color:var(--muted); }
-  input:focus{ border-color:var(--amber); outline:none; }
+
+  input::placeholder{
+    color:var(--muted);
+  }
+
+  input:focus{
+    border-color:var(--amber);
+    outline:none;
+  }
 
   .submit-btn{
     width:100%;
+    min-height:44px;
     background:var(--amber);
     color:#1A1305;
     border:none;
     font-family:var(--font-mono);
     font-weight:600;
     font-size:12.5px;
-    letter-spacing:0.5px;
+    letter-spacing:.5px;
     padding:12px;
     border-radius:5px;
     cursor:pointer;
     margin-top:6px;
-    transition:filter 0.15s ease;
+    transition:filter .15s ease, transform .1s ease;
   }
-  .submit-btn:hover{ filter:brightness(1.08); }
-  .submit-btn:disabled{ opacity:0.6; cursor:default; }
+
+  .submit-btn:hover{
+    filter:brightness(1.08);
+  }
+
+  .submit-btn:active{
+    transform:scale(.99);
+  }
+
+  .submit-btn:disabled{
+    opacity:.6;
+    cursor:default;
+  }
 
   .form-msg{
     font-family:var(--font-mono);
     font-size:11.5px;
+    line-height:1.4;
     margin-top:14px;
     min-height:16px;
   }
-  .form-msg.error{ color:var(--red); }
-  .form-msg.ok{ color:var(--green); }
+
+  .form-msg.error{
+    color:var(--red);
+  }
+
+  .form-msg.ok{
+    color:var(--green);
+  }
 
   .switch-line{
     font-family:var(--font-mono);
     font-size:11.5px;
+    line-height:1.5;
     color:var(--muted);
     margin-top:22px;
   }
+
   .switch-line button{
-    background:none; border:none;
+    background:none;
+    border:none;
     color:var(--amber);
     font-family:var(--font-mono);
     font-size:11.5px;
@@ -186,43 +286,69 @@
     padding:0;
   }
 
+  /* =========================
+     SIDE PANEL
+  ========================= */
+
   .side-panel{
     background:
-      radial-gradient(circle at 20% 20%, rgba(242,169,59,0.10), transparent 55%),
-      linear-gradient(160deg, #161B26 0%, #0E1119 100%);
+      radial-gradient(
+        circle at 20% 20%,
+        rgba(242,169,59,.10),
+        transparent 55%
+      ),
+      linear-gradient(
+        160deg,
+        #161B26 0%,
+        #0E1119 100%
+      );
+
     padding:44px 38px;
     display:flex;
     flex-direction:column;
     justify-content:center;
     position:relative;
     border-left:1px solid var(--border);
+    min-width:0;
   }
+
   .ticker-strip{
     display:flex;
     flex-direction:column;
     gap:9px;
     margin-bottom:32px;
   }
+
   .ticker-strip .row{
     font-family:var(--font-mono);
     font-size:11px;
     display:flex;
     justify-content:space-between;
+    align-items:center;
+    gap:10px;
     color:var(--muted-2);
-    padding:6px 10px;
-    background:rgba(255,255,255,0.02);
+    padding:7px 10px;
+    background:rgba(255,255,255,.02);
     border:1px solid var(--border);
     border-radius:4px;
   }
-  .ticker-strip .row .up{ color:var(--green); }
-  .ticker-strip .row .down{ color:var(--red); }
+
+  .ticker-strip .row .up{
+    color:var(--green);
+  }
+
+  .ticker-strip .row .down{
+    color:var(--red);
+  }
 
   .side-panel h2{
     font-family:var(--font-display);
     font-size:21px;
+    line-height:1.25;
     font-weight:600;
     margin-bottom:10px;
   }
+
   .side-panel p{
     font-family:var(--font-body);
     font-size:13px;
@@ -230,6 +356,7 @@
     line-height:1.5;
     margin-bottom:22px;
   }
+
   .ghost-btn{
     align-self:flex-start;
     background:transparent;
@@ -241,157 +368,697 @@
     border-radius:5px;
     cursor:pointer;
   }
-  .ghost-btn:hover{ background:var(--amber-dim); }
+
+  .ghost-btn:hover{
+    background:var(--amber-dim);
+  }
+
+  /* =====================================
+     TABLET
+  ===================================== */
+
+  @media (max-width:720px){
+
+    body{
+      align-items:center;
+      padding:75px 14px 25px;
+    }
+
+    .auth-scene{
+      max-width:500px;
+      height:500px;
+    }
+
+    .auth-face{
+      grid-template-columns:1fr;
+    }
+
+    .side-panel{
+      display:none;
+    }
+
+    .form-panel{
+      padding:40px 34px;
+    }
+  }
+
+  /* =====================================
+     PHONE
+  ===================================== */
+
+  @media (max-width:480px){
+
+    body{
+      padding:70px 12px 20px;
+      align-items:center;
+    }
+
+    .brand-row{
+      top:16px;
+      left:16px;
+    }
+
+    .brand-mark{
+      width:25px;
+      height:25px;
+      font-size:11px;
+    }
+
+    .brand-name{
+      font-size:15px;
+    }
+
+    .auth-scene{
+      width:100%;
+      max-width:390px;
+      height:480px;
+      perspective:1200px;
+    }
+
+    .auth-face{
+      border-radius:8px;
+    }
+
+    .form-panel{
+      padding:32px 24px;
+      justify-content:center;
+    }
+
+    .eyebrow{
+      font-size:9px;
+      letter-spacing:1.3px;
+      margin-bottom:9px;
+    }
+
+    h1{
+      font-size:24px;
+      margin-bottom:7px;
+    }
+
+    .subhead{
+      font-size:12px;
+      margin-bottom:24px;
+    }
+
+    .field{
+      margin-bottom:16px;
+    }
+
+    label{
+      font-size:10px;
+      margin-bottom:6px;
+    }
+
+    input[type="email"],
+    input[type="password"]{
+      height:45px;
+      font-size:12px;
+      padding:11px 12px;
+    }
+
+    .submit-btn{
+      min-height:45px;
+      font-size:12px;
+    }
+
+    .switch-line{
+      font-size:10.5px;
+      margin-top:19px;
+    }
+
+    .switch-line button{
+      font-size:10.5px;
+    }
+
+    .form-msg{
+      font-size:10.5px;
+    }
+  }
+
+  /* =====================================
+     SMALL PHONES
+  ===================================== */
+
+  @media (max-width:360px){
+
+    body{
+      padding:65px 10px 15px;
+    }
+
+    .auth-scene{
+      height:450px;
+    }
+
+    .form-panel{
+      padding:28px 20px;
+    }
+
+    h1{
+      font-size:22px;
+    }
+
+    .subhead{
+      font-size:11.5px;
+      margin-bottom:21px;
+    }
+
+    .field{
+      margin-bottom:14px;
+    }
+
+    input[type="email"],
+    input[type="password"]{
+      height:43px;
+      font-size:11.5px;
+    }
+
+    .submit-btn{
+      min-height:43px;
+    }
+
+    .switch-line{
+      font-size:10px;
+    }
+
+    .switch-line button{
+      font-size:10px;
+    }
+  }
+
+  /* =====================================
+     VERY SHORT PHONES
+  ===================================== */
+
+  @media (max-height:600px) and (max-width:480px){
+
+    body{
+      align-items:flex-start;
+      padding-top:65px;
+      padding-bottom:15px;
+    }
+
+    .auth-scene{
+      height:auto;
+      min-height:430px;
+    }
+
+    .auth-face{
+      position:relative;
+      min-height:430px;
+    }
+
+    .auth-face.back{
+      position:absolute;
+    }
+
+    .form-panel{
+      padding-top:25px;
+      padding-bottom:25px;
+    }
+  }
 </style>
 </head>
+
 <body>
 
+  <!-- BRAND -->
   <div class="brand-row">
     <div class="brand-mark">A</div>
     <span class="brand-name">ATLAS</span>
   </div>
 
+  <!-- AUTH CARD -->
   <div class="auth-scene">
+
     <div class="auth-card" id="authCard">
 
-    
+      <!-- =====================
+           LOGIN FRONT
+      ====================== -->
+
       <div class="auth-face front">
+
         <div class="form-panel">
-          <div class="eyebrow">Auto Trader Console</div>
-          <h1>Welcome back</h1>
-          <div class="subhead">Sign in to reach your live positions.</div>
+
+          <div class="eyebrow">
+            Auto Trader Console
+          </div>
+
+          <h1>
+            Welcome back
+          </h1>
+
+          <div class="subhead">
+            Sign in to reach your live positions.
+          </div>
 
           <form id="loginForm">
+
             <div class="field">
-              <label for="loginEmail">Email address</label>
-              <input type="email" id="loginEmail" placeholder="you@company.com" required>
+              <label for="loginEmail">
+                Email address
+              </label>
+
+              <input
+                type="email"
+                id="loginEmail"
+                placeholder="you@company.com"
+                autocomplete="email"
+                required
+              >
             </div>
+
             <div class="field">
-              <label for="loginPassword">Password</label>
-              <input type="password" id="loginPassword" placeholder="Enter your password" required>
+              <label for="loginPassword">
+                Password
+              </label>
+
+              <input
+                type="password"
+                id="loginPassword"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              >
             </div>
-            <button type="submit" class="submit-btn" id="loginBtn">Sign in</button>
-            <div class="form-msg" id="loginMsg"></div>
+
+            <button
+              type="submit"
+              class="submit-btn"
+              id="loginBtn"
+            >
+              Sign in
+            </button>
+
+            <div
+              class="form-msg"
+              id="loginMsg"
+              aria-live="polite"
+            ></div>
+
           </form>
 
           <div class="switch-line">
-            New to ATLAS? <button type="button" id="toSignup">Create an account</button>
+            New to ATLAS?
+
+            <button
+              type="button"
+              id="toSignup"
+            >
+              Create an account
+            </button>
           </div>
+
         </div>
 
+
+        <!-- DESKTOP SIDE PANEL -->
+
         <div class="side-panel">
+
           <div class="ticker-strip">
-            <div class="row"><span>BTC-USD</span><span class="up">▲ 0.42%</span></div>
-            <div class="row"><span>ETH-USD</span><span class="down">▼ 0.18%</span></div>
-            <div class="row"><span>SOL-USD</span><span class="up">▲ 1.05%</span></div>
+
+            <div class="row">
+              <span>BTC-USD</span>
+              <span class="up">▲ 0.42%</span>
+            </div>
+
+            <div class="row">
+              <span>ETH-USD</span>
+              <span class="down">▼ 0.18%</span>
+            </div>
+
+            <div class="row">
+              <span>SOL-USD</span>
+              <span class="up">▲ 1.05%</span>
+            </div>
+
           </div>
-          <h2>Your bot, watched.</h2>
-          <p>Track signals, positions, and risk in one console — connected straight to your strategy.</p>
+
+          <h2>
+            Your bot, watched.
+          </h2>
+
+          <p>
+            Track signals, positions, and risk in one console —
+            connected straight to your strategy.
+          </p>
+
         </div>
+
       </div>
 
-      
+
+      <!-- =====================
+           SIGNUP BACK
+      ====================== -->
+
       <div class="auth-face back">
+
         <div class="side-panel">
+
           <div class="ticker-strip">
-            <div class="row"><span>NVDA</span><span class="up">▲ 2.11%</span></div>
-            <div class="row"><span>TSLA</span><span class="down">▼ 0.63%</span></div>
-            <div class="row"><span>AAPL</span><span class="up">▲ 0.29%</span></div>
+
+            <div class="row">
+              <span>NVDA</span>
+              <span class="up">▲ 2.11%</span>
+            </div>
+
+            <div class="row">
+              <span>TSLA</span>
+              <span class="down">▼ 0.63%</span>
+            </div>
+
+            <div class="row">
+              <span>AAPL</span>
+              <span class="up">▲ 0.29%</span>
+            </div>
+
           </div>
-          <h2>Already set up?,great😁</h2>
-          <p>Sign back in to resume monitoring your running strategy and open positions.</p>
-          <button type="button" class="ghost-btn" id="toLogin">Back to sign in</button>
+
+          <h2>
+            Already set up? Great 😁
+          </h2>
+
+          <p>
+            Sign back in to resume monitoring your running
+            strategy and open positions.
+          </p>
+
+          <button
+            type="button"
+            class="ghost-btn"
+            id="toLogin"
+          >
+            Back to sign in
+          </button>
+
         </div>
+
 
         <div class="form-panel">
-          <div class="eyebrow">Make it yours</div>
-          <h1>Create your account</h1>
-          <div class="subhead">Free to start. Connect your strategy in minutes.</div>
+
+          <div class="eyebrow">
+            Make it yours
+          </div>
+
+          <h1>
+            Create your account
+          </h1>
+
+          <div class="subhead">
+            Free to start. Connect your strategy in minutes.
+          </div>
 
           <form id="signupForm">
+
             <div class="field">
-              <label for="signupEmail">Email address</label>
-              <input type="email" id="signupEmail" placeholder="you@company.com" required>
+
+              <label for="signupEmail">
+                Email address
+              </label>
+
+              <input
+                type="email"
+                id="signupEmail"
+                placeholder="you@company.com"
+                autocomplete="email"
+                required
+              >
+
             </div>
+
             <div class="field">
-              <label for="signupPassword">Password</label>
-              <input type="password" id="signupPassword" placeholder="At least 6 characters" required minlength="6">
+
+              <label for="signupPassword">
+                Password
+              </label>
+
+              <input
+                type="password"
+                id="signupPassword"
+                placeholder="At least 6 characters"
+                autocomplete="new-password"
+                required
+                minlength="6"
+              >
+
             </div>
-            <button type="submit" class="submit-btn" id="signupBtn">Create account</button>
-            <div class="form-msg" id="signupMsg"></div>
+
+            <button
+              type="submit"
+              class="submit-btn"
+              id="signupBtn"
+            >
+              Create account
+            </button>
+
+            <div
+              class="form-msg"
+              id="signupMsg"
+              aria-live="polite"
+            ></div>
+
           </form>
+
         </div>
+
       </div>
 
     </div>
   </div>
 
-<script>
-  const API = ""; 
 
-  const card = document.getElementById('authCard');
-  document.getElementById('toSignup').addEventListener('click', () => card.classList.add('flipped'));
-  document.getElementById('toLogin').addEventListener('click', () => card.classList.remove('flipped'));
+<script>
+
+  const API = "";
+
+  const card = document.getElementById("authCard");
+
+  /* ==========================
+     SWITCH LOGIN / SIGNUP
+  ========================== */
+
+  document
+    .getElementById("toSignup")
+    .addEventListener("click", () => {
+
+      card.classList.add("flipped");
+
+      setTimeout(() => {
+        document.getElementById("signupEmail").focus();
+      }, 500);
+
+    });
+
+
+  document
+    .getElementById("toLogin")
+    .addEventListener("click", () => {
+
+      card.classList.remove("flipped");
+
+      setTimeout(() => {
+        document.getElementById("loginEmail").focus();
+      }, 500);
+
+    });
+
+
+  /* ==========================
+     MESSAGE FUNCTION
+  ========================== */
 
   function setMsg(el, text, type){
+
     el.textContent = text;
-    el.className = 'form-msg' + (type ? ' ' + type : '');
+
+    el.className =
+      "form-msg" +
+      (type ? " " + type : "");
+
   }
 
-  document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('loginBtn');
-    const msg = document.getElementById('loginMsg');
-    const email = document.getElementById('loginEmail').value;
-    const password = document.getElementById('loginPassword').value;
 
-    btn.disabled = true;
-    setMsg(msg, 'Signing in…', '');
+  /* ==========================
+     LOGIN
+  ========================== */
 
-    try{
-      const res = await fetch(`${API}/api/auth/login`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email, password})
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.detail || 'Login failed');
+  document
+    .getElementById("loginForm")
+    .addEventListener("submit", async (e) => {
 
-      setMsg(msg, 'Signed in — loading console…', 'ok');
-      window.location.href = `/auto_trader_dashboard.html?token=${data.token}`;
-    }catch(err){
-      setMsg(msg, err.message, 'error');
-      btn.disabled = false;
-    }
-  });
+      e.preventDefault();
 
-  document.getElementById('signupForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('signupBtn');
-    const msg = document.getElementById('signupMsg');
-    const email = document.getElementById('signupEmail').value;
-    const password = document.getElementById('signupPassword').value;
+      const btn =
+        document.getElementById("loginBtn");
 
-    btn.disabled = true;
-    setMsg(msg, 'Creating account…', '');
+      const msg =
+        document.getElementById("loginMsg");
 
-    try{
-      const res = await fetch(`${API}/api/auth/signup`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email, password})
-      });
-      const data = await res.json();
-      if(!res.ok) throw new Error(data.detail || 'Signup failed');
+      const email =
+        document.getElementById("loginEmail").value.trim();
 
-      setMsg(msg, 'Account created — loading console…', 'ok');
-      window.location.href = `/auto_trader_dashboard.html?token=${data.token}`;
-    }catch(err){
-      setMsg(msg, err.message, 'error');
-      btn.disabled = false;
-    }
-  });
+      const password =
+        document.getElementById("loginPassword").value;
+
+
+      btn.disabled = true;
+
+      setMsg(
+        msg,
+        "Signing in…",
+        ""
+      );
+
+
+      try{
+
+        const res = await fetch(
+          `${API}/api/auth/login`,
+          {
+            method:"POST",
+
+            headers:{
+              "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+              email,
+              password
+            })
+          }
+        );
+
+
+        const data = await res.json();
+
+
+        if(!res.ok){
+
+          throw new Error(
+            data.detail || "Login failed"
+          );
+
+        }
+
+
+        setMsg(
+          msg,
+          "Signed in — loading console…",
+          "ok"
+        );
+
+
+        window.location.href =
+          `/auto_trader_dashboard.html?token=${data.token}`;
+
+
+      }catch(err){
+
+        setMsg(
+          msg,
+          err.message,
+          "error"
+        );
+
+        btn.disabled = false;
+
+      }
+
+    });
+
+
+  /* ==========================
+     SIGNUP
+  ========================== */
+
+  document
+    .getElementById("signupForm")
+    .addEventListener("submit", async (e) => {
+
+      e.preventDefault();
+
+      const btn =
+        document.getElementById("signupBtn");
+
+      const msg =
+        document.getElementById("signupMsg");
+
+      const email =
+        document.getElementById("signupEmail").value.trim();
+
+      const password =
+        document.getElementById("signupPassword").value;
+
+
+      btn.disabled = true;
+
+      setMsg(
+        msg,
+        "Creating account…",
+        ""
+      );
+
+
+      try{
+
+        const res = await fetch(
+          `${API}/api/auth/signup`,
+          {
+            method:"POST",
+
+            headers:{
+              "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+              email,
+              password
+            })
+          }
+        );
+
+
+        const data = await res.json();
+
+
+        if(!res.ok){
+
+          throw new Error(
+            data.detail || "Signup failed"
+          );
+
+        }
+
+
+        setMsg(
+          msg,
+          "Account created — loading console…",
+          "ok"
+        );
+
+
+        window.location.href =
+          `/auto_trader_dashboard.html?token=${data.token}`;
+
+
+      }catch(err){
+
+        setMsg(
+          msg,
+          err.message,
+          "error"
+        );
+
+        btn.disabled = false;
+
+      }
+
+    });
+
 </script>
 
 </body>
 </html>
+```

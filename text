@@ -166,10 +166,4 @@ learning project — not a production trading signal. Its test-set R^2
 and directional accuracy are reported transparently precisely so you
 don't overstate what it can actually do. Markets are extremely hard
 to predict; a model with modest but positive directional accuracy on
-held-out data is a reasonable, defensible result for this project.
-
-
-
-
-pip install -r requirements.txt
-gunicorn your_application.wsgi
+held-out data is a reasonable, defensible result for this project
