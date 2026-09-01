@@ -5,6 +5,7 @@ import time
 import uuid
 
 import bcrypt
+import requests
 from dotenv import load_dotenv
 
 load_dotenv()  
@@ -189,13 +190,78 @@ def add_notification(note: NotificationIn):
 def list_notifications():
     return NOTIFICATIONS[:100]
 
+FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY")
+FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
+
+# Stocks use their plain ticker; crypto uses Finnhub's `EXCHANGE:PAIR` format
+# since /quote is stock-market-shaped and needs an explicit venue for crypto.
+TICKER_SYMBOLS = [
+    {"display": "BTC-USD", "finnhub": "BINANCE:BTCUSDT"},
+    {"display": "ETH-USD", "finnhub": "BINANCE:ETHUSDT"},
+    {"display": "SOL-USD", "finnhub": "BINANCE:SOLUSDT"},
+    {"display": "AAPL", "finnhub": "AAPL"},
+    {"display": "TSLA", "finnhub": "TSLA"},
+    {"display": "NVDA", "finnhub": "NVDA"},
+]
+
+
+def _finnhub_get(path: str, params: dict | None = None) -> dict:
+    if not FINNHUB_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="FINNHUB_API_KEY is not set. Add it to your .env file. "
+                   "Get a free key at finnhub.io",
+        )
+    try:
+        resp = requests.get(
+            f"{FINNHUB_BASE_URL}{path}",
+            params={**(params or {}), "token": FINNHUB_API_KEY},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException as e:
+        raise HTTPException(status_code=503, detail=f"Finnhub request failed: {e}")
+
+
+def _time_ago(unix_ts: float) -> str:
+    diff = time.time() - unix_ts
+    if diff < 60:
+        return "just now"
+    if diff < 3600:
+        return f"{int(diff // 60)}m ago"
+    if diff < 86400:
+        return f"{int(diff // 3600)}h ago"
+    return f"{int(diff // 86400)}d ago"
+
+
+@app.get("/api/ticker")
+def get_ticker():
+    items = []
+    for entry in TICKER_SYMBOLS:
+        quote = _finnhub_get("/quote", {"symbol": entry["finnhub"]})
+        items.append({
+            "symbol": entry["display"],
+            "price": quote.get("c"),
+            "changePct": quote.get("dp") or 0,
+        })
+    return {"items": items}
+
+
 @app.get("/api/news")
 def get_news():
-    return [
-        {"src": "Reuters", "headline": "Fed signals rate path unchanged after latest meeting", "sentiment": "neutral"},
-        {"src": "Bloomberg", "headline": "Bitcoin climbs as spot ETF inflows extend to a fifth day", "sentiment": "bullish"},
-        {"src": "CNBC", "headline": "Tech shares slip on renewed chip export concerns", "sentiment": "bearish"},
-    ]
+    raw = _finnhub_get("/news", {"category": "general"})
+    items = []
+    for n in raw[:10]:
+        items.append({
+            "src": n.get("source", "Finnhub"),
+            "time": _time_ago(n.get("datetime", time.time())),
+            "headline": n.get("headline", ""),
+            # Finnhub's general news feed has no sentiment field — default to
+            # neutral, or plug in your own scoring / a sentiment-aware API.
+            "sentiment": "neutral",
+        })
+    return items
 
 
 @app.get("/api/pnl")
