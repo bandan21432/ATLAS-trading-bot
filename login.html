@@ -209,12 +209,9 @@
     padding:0;
   }
 
-  /* Only shown on mobile — on desktop, the side panel's "Back to
-     sign in" button already covers this, and the side panel itself
-     is hidden below 720px, so this fills that gap. */
   .mobile-only-switch{ display:none; }
 
-  /* ===== side panel (signature element) ===== */
+  /* side panel (signature element)  */
   .side-panel{
     background:
       radial-gradient(circle at 20% 20%, rgba(242,169,59,0.10), transparent 55%),
@@ -360,8 +357,7 @@
   </div>
 
 <script>
-  // If already logged in, skip straight to the dashboard instead of
-  // showing the login form again.
+  
   if (localStorage.getItem('atlas_token')) {
     window.location.replace('/auto_trader_dashboard.html');
   }
