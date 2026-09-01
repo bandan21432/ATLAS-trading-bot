@@ -643,15 +643,15 @@
           <div class="main">
             <div class="price-block">
               <div class="symbol-row">
-                <span class="symbol">BTC / USD</span>
-                <span class="price up" id="priceValue">10,204.50</span>
+                <span class="symbol" id="balanceSymbol">PAPER BALANCE</span>
+                <span class="price up" id="priceValue">10,412.88</span>
                 <span class="delta up" id="priceDelta">+0.42%</span>
               </div>
             </div>
 
             <div class="chart-panel">
               <div class="chart-header">
-                <span class="chart-title">Price — Last 60 Ticks</span>
+                <span class="chart-title">Paper Balance — Last 60 Updates</span>
                 <div class="timeframe-tabs">
                   <button class="tf-tab active">1m</button>
                   <button class="tf-tab">5m</button>
@@ -911,7 +911,6 @@
     renderNotifPage();
     showToast(notif);
 
-  
     fetch('/api/notifications', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -993,7 +992,6 @@
     document.querySelector('.nav-btn[data-view="notifications"]').click();
   });
 
-  
   pushNotification('info', 'Bot connected', 'Price feed established');
   setInterval(() => {
     const events = [
@@ -1006,15 +1004,16 @@
     pushNotification(type, title, desc);
   }, 15000);
 
-  /*  OVERVIEW: price feed + chart — drifts on its own between trades, but every
-      paper buy/sell re-anchors the price to the actual fill and marks the chart. */
-  let price = 68204.50;
+  /*  OVERVIEW: paper-balance feed + chart — drifts slightly on its own between
+      broker refreshes (cosmetic only), but every real broker fetch and every
+      paper buy/sell re-anchors the displayed number to the actual value. */
+  let price = 10412.88; // seeded from paper equity; re-anchored to the real value once /api/alpaca/account (or IBKR) responds
   let history = [];           // plain price values, kept for backward-compat (e.g. forecast seed)
   let historyMarkers = [];    // parallel array: null | 'buy' | 'sell' at each history index
   const maxPoints = 60;
 
   const STARTING_EQUITY = 10412.88 - 412.88; // baseline equity before today's simulated P/L
-  let paperEquity = 10412.88;   // synced from /api/alpaca/account when available, else tracked locally
+  let paperEquity = 10412.88;   // synced from /api/alpaca/account (or IBKR) when available, else tracked locally
   let realizedPL = 0;           // running P/L from paper fills, used when the broker call is unavailable
 
   function pushPricePoint(p, marker = null){
@@ -1024,14 +1023,18 @@
   }
 
   function nextTick(){
-    const change = (Math.random() - 0.5) * 60;
-    price = Math.max(1000, price + change);
+    // Small cosmetic jitter around the last known real balance, so the chart
+    // still feels "live" between broker refreshes (every 15s). Proportional
+    // to price so it looks sane at dollar-balance scale instead of the old
+    // fixed +/-30 (which was tuned for a ~$68,000 crypto price).
+    const change = (Math.random() - 0.5) * (price * 0.0015);
+    price = Math.max(0.01, price + change);
     pushPricePoint(price);
     return change;
   }
 
-  // Re-anchors the live price/chart to an actual paper trade fill, so the
-  // "BTC/USD" ticker and the chart always reflect what the paper account just did.
+  // Re-anchors the live number/chart to an actual paper trade fill, so the
+  // header and the chart always reflect what the paper account just did.
   function applyTradeToPriceFeed(side, fillPrice, qty){
     if(typeof fillPrice === 'number' && !isNaN(fillPrice)){
       price = fillPrice;
@@ -1089,7 +1092,6 @@
     `;
   }
 
-  
   function updateEquityStats(equity, dayPl, fromBroker){
     const eqEl = document.getElementById('equityStat');
     const plEl = document.getElementById('dayPlStat');
@@ -1111,7 +1113,6 @@
     deltaEl.textContent = (up ? '+' : '') + pct + '%';
   }
 
- 
   function paintTicker(items){
     const track = document.getElementById('tickerTrack');
     let html = '';
@@ -1182,7 +1183,6 @@
   document.getElementById('logoutBtn').addEventListener('click', () => {
     if(!confirm('Log out of ATLAS?')) return;
 
-    
     fetch('/api/auth/logout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1205,7 +1205,7 @@
   });
 
   function executeManualTrade(side){
-    const symbol = 'AAPL'; 
+    const symbol = 'AAPL';
     const qty = 1;
 
     fetch('/api/alpaca/order', {
@@ -1217,7 +1217,6 @@
       .then(({ ok, data }) => {
         if(!ok) throw new Error(data.detail || 'Order failed');
 
-        
         const fillPrice = Number(data.filled_avg_price ?? data.fill_price ?? data.avg_fill_price ?? price);
         applyTradeToPriceFeed(side, fillPrice, qty);
 
@@ -1228,11 +1227,9 @@
         addLog(`${side.toUpperCase()} ${qty} ${symbol} @ ${fillPrice.toFixed(2)} — status: ${data.status}`, 'ALPACA');
         pushNotification(side, `Alpaca ${side} order ${data.status}`, `${qty} ${symbol} @ $${fillPrice.toFixed(2)}`);
 
-        
         refreshBrokerStatus();
       })
       .catch(err => {
-      
         const simQty = Number((Math.random() * 0.02 + 0.005).toFixed(6));
         applyTradeToPriceFeed(side, price, simQty);
 
@@ -1243,10 +1240,29 @@
 
   document.getElementById('manualBuyBtn').addEventListener('click', () => executeManualTrade('buy'));
 
-
   function setBrokerStatus(dotId, detailId, connected, detailText){
     document.getElementById(dotId).className = 'broker-dot ' + (connected ? 'connected' : 'error');
     document.getElementById(detailId).textContent = detailText;
+  }
+
+  // Which broker is currently powering the big header number, so we don't
+  // fight between Alpaca and IBKR both trying to set it every refresh cycle.
+  let activeBalanceSource = null; // 'alpaca' | 'ibkr' | null
+
+  function applyBalanceToHeader(source, equity, basis, label){
+    // Only let a higher-priority (or the currently-active) source drive the
+    // header, so Alpaca and IBKR don't overwrite each other every 15s.
+    if(activeBalanceSource && activeBalanceSource !== source && source === 'ibkr') return;
+    activeBalanceSource = source;
+
+    document.getElementById('balanceSymbol').textContent = label;
+    price = equity;
+    pushPricePoint(price);
+    renderLineChart(document.getElementById('chart'), history, undefined, undefined, historyMarkers);
+    updatePriceUI(equity - basis);
+
+    paperEquity = equity;
+    updateEquityStats(equity, equity - basis, true);
   }
 
   function refreshBrokerStatus(){
@@ -1257,13 +1273,14 @@
         setBrokerStatus('alpacaDot', 'alpacaDetail', true,
           '$' + data.equity.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) + (data.paper ? ' (paper)' : ''));
 
-      
         const equity = Number(data.equity);
         const basis = Number(data.last_equity ?? data.previous_equity ?? STARTING_EQUITY);
-        paperEquity = equity;
-        updateEquityStats(equity, equity - basis, true);
+        applyBalanceToHeader('alpaca', equity, basis, 'ALPACA PAPER BALANCE');
       })
-      .catch(() => setBrokerStatus('alpacaDot', 'alpacaDetail', false, 'Not connected'));
+      .catch(() => {
+        setBrokerStatus('alpacaDot', 'alpacaDetail', false, 'Not connected');
+        if(activeBalanceSource === 'alpaca') activeBalanceSource = null; // let IBKR take over on next successful fetch
+      });
 
     fetch('/api/ibkr/account')
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
@@ -1272,6 +1289,11 @@
         const eq = data.NetLiquidation;
         setBrokerStatus('ibkrDot', 'ibkrDetail', true,
           eq !== undefined ? '$' + eq.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) : 'Connected');
+
+        // Only drive the header from IBKR if Alpaca isn't already doing so.
+        if(eq !== undefined && activeBalanceSource !== 'alpaca'){
+          applyBalanceToHeader('ibkr', Number(eq), STARTING_EQUITY, 'IBKR PAPER BALANCE');
+        }
       })
       .catch(() => setBrokerStatus('ibkrDot', 'ibkrDetail', false, 'Not connected'));
   }
@@ -1280,7 +1302,6 @@
   setInterval(refreshBrokerStatus, 15000);
   document.getElementById('manualSellBtn').addEventListener('click', () => executeManualTrade('sell'));
 
-  
   function renderPnlChart(svgEl, data, baseline){
     if(data.length < 2) return;
     const domain = [...data, baseline];
@@ -1302,7 +1323,6 @@
     const lineColor = lastUp ? '#3FBF7F' : '#E5484D';
     const id = svgEl.id;
 
-   
     let markers = '';
     for(let i = 1; i < points.length - 1; i++){
       const [x, y] = points[i];
@@ -1362,7 +1382,6 @@
     const isML = currentModel === 'ml_gbr';
     document.getElementById('mlSymbolWrap').style.display = isML ? 'flex' : 'none';
 
-
     document.querySelectorAll('.horizon-tab').forEach(t => {
       const disable = isML && (t.dataset.horizon === '1h' || t.dataset.horizon === '4h');
       t.disabled = disable;
@@ -1380,7 +1399,6 @@
   document.getElementById('mlSymbolInput').addEventListener('change', () => {
     if(currentModel === 'ml_gbr') loadForecast();
   });
-
 
   document.querySelectorAll('.horizon-tab').forEach(t => {
     const disable = t.dataset.horizon === '1h' || t.dataset.horizon === '4h';
@@ -1427,7 +1445,6 @@
   }
 
   function buildForecastDemo(horizon){
-    
     const history = [];
     let p = price || 68000;
     for(let i=0;i<40;i++){ p += (Math.random()-0.48)*40; history.push(p); }
@@ -1510,10 +1527,9 @@
         + ` (${data.total_pnl_pct >= 0 ? '+' : ''}${data.total_pnl_pct}%)`;
     })
     .catch(() => {
-      renderPnlChart(document.getElementById('pnlChart'), buildEquityCurveDemo(), 10000); 
+      renderPnlChart(document.getElementById('pnlChart'), buildEquityCurveDemo(), 10000);
     });
 
-  
   function paintNews(items){
     document.getElementById('newsList').innerHTML = items.map(n => `
       <div class="news-item">
@@ -1538,8 +1554,7 @@
   }
 
   loadNews();
-  setInterval(loadNews, 60000); 
-
+  setInterval(loadNews, 60000);
 
   const chatMessages = document.getElementById('chatMessages');
   const chatInput = document.getElementById('chatInput');
