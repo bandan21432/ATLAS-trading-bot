@@ -86,6 +86,17 @@ def current_user(token: str) -> str:
     return email
 
 
+class LogoutRequest(BaseModel):
+    token: str | None = None
+
+
+@app.post("/api/auth/logout")
+def logout(req: LogoutRequest):
+    if req.token:
+        SESSIONS.pop(req.token, None)
+    return {"success": True}
+
+
 _last_price = 68204.50
 
 
@@ -193,8 +204,7 @@ def list_notifications():
 FINNHUB_API_KEY = os.environ.get("FINNHUB_API_KEY")
 FINNHUB_BASE_URL = "https://finnhub.io/api/v1"
 
-# Stocks use their plain ticker; crypto uses Finnhub's `EXCHANGE:PAIR` format
-# since /quote is stock-market-shaped and needs an explicit venue for crypto.
+
 TICKER_SYMBOLS = [
     {"display": "BTC-USD", "finnhub": "BINANCE:BTCUSDT"},
     {"display": "ETH-USD", "finnhub": "BINANCE:ETHUSDT"},
@@ -257,8 +267,7 @@ def get_news():
             "src": n.get("source", "Finnhub"),
             "time": _time_ago(n.get("datetime", time.time())),
             "headline": n.get("headline", ""),
-            # Finnhub's general news feed has no sentiment field — default to
-            # neutral, or plug in your own scoring / a sentiment-aware API.
+            
             "sentiment": "neutral",
         })
     return items
