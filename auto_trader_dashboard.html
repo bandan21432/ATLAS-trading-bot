@@ -698,10 +698,10 @@
 
             <div class="panel-block">
               <h3>Open Position</h3>
-              <div class="position-row"><span class="k">Symbol</span><span class="v">BTC-USD</span></div>
-              <div class="position-row"><span class="k">Qty</span><span class="v">0.014720</span></div>
-              <div class="position-row"><span class="k">Entry</span><span class="v">$67,940.10</span></div>
-              <div class="position-row"><span class="k">Unrealized</span><span class="v" style="color:var(--green)">+$3.89</span></div>
+              <div class="position-row"><span class="k">Symbol</span><span class="v" id="posSymbol">—</span></div>
+              <div class="position-row"><span class="k">Qty</span><span class="v" id="posQty">—</span></div>
+              <div class="position-row"><span class="k">Entry</span><span class="v" id="posEntry">—</span></div>
+              <div class="position-row"><span class="k">Unrealized</span><span class="v" id="posUnrealized">—</span></div>
             </div>
 
             <div class="panel-block">
@@ -1220,14 +1220,11 @@
         const fillPrice = Number(data.filled_avg_price ?? data.fill_price ?? data.avg_fill_price ?? price);
         applyTradeToPriceFeed(side, fillPrice, qty);
 
-        document.querySelector('#view-overview .position-row:nth-child(1) .v').textContent = symbol;
-        document.querySelector('#view-overview .position-row:nth-child(2) .v').textContent = qty;
-        document.querySelector('#view-overview .position-row:nth-child(3) .v').textContent = data.status;
-
         addLog(`${side.toUpperCase()} ${qty} ${symbol} @ ${fillPrice.toFixed(2)} — status: ${data.status}`, 'ALPACA');
         pushNotification(side, `Alpaca ${side} order ${data.status}`, `${qty} ${symbol} @ $${fillPrice.toFixed(2)}`);
 
         refreshBrokerStatus();
+        loadPositions(); // pull the real, updated position instead of guessing at it
       })
       .catch(err => {
         const simQty = Number((Math.random() * 0.02 + 0.005).toFixed(6));
@@ -1301,6 +1298,63 @@
   refreshBrokerStatus();
   setInterval(refreshBrokerStatus, 15000);
   document.getElementById('manualSellBtn').addEventListener('click', () => executeManualTrade('sell'));
+
+  /* =========================================================
+     OPEN POSITION — pulls the real position from Alpaca (falling
+     back to IBKR if Alpaca has none/is unreachable), instead of
+     the old hardcoded BTC-USD placeholder.
+  ========================================================= */
+  function paintPosition(symbol, qty, entry, unrealizedPl){
+    document.getElementById('posSymbol').textContent = symbol;
+    document.getElementById('posQty').textContent = qty;
+    document.getElementById('posEntry').textContent =
+      '$' + Number(entry).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+
+    const upEl = document.getElementById('posUnrealized');
+    if(unrealizedPl === null || unrealizedPl === undefined){
+      upEl.textContent = '—';
+      upEl.style.color = '';
+    }else{
+      const up = unrealizedPl >= 0;
+      upEl.textContent = (up ? '+$' : '-$') + Math.abs(unrealizedPl).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+      upEl.style.color = up ? 'var(--green)' : 'var(--red)';
+    }
+  }
+
+  function paintNoPosition(){
+    document.getElementById('posSymbol').textContent = 'None';
+    document.getElementById('posQty').textContent = '—';
+    document.getElementById('posEntry').textContent = '—';
+    document.getElementById('posUnrealized').textContent = '—';
+    document.getElementById('posUnrealized').style.color = '';
+  }
+
+  function loadPositions(){
+    fetch('/api/alpaca/positions')
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if(!ok) throw new Error('alpaca positions unavailable');
+        if(Array.isArray(data) && data.length > 0){
+          const p = data[0]; // showing the most recent/first open position
+          paintPosition(p.symbol, p.quantity, p.avg_entry_price, p.unrealized_pl);
+        }else{
+          throw new Error('no alpaca positions'); // fall through to IBKR check below
+        }
+      })
+      .catch(() => {
+        fetch('/api/ibkr/positions')
+          .then(r => r.json().then(data => ({ ok: r.ok, data })))
+          .then(({ ok, data }) => {
+            if(!ok || !Array.isArray(data) || data.length === 0) throw new Error('no ibkr positions either');
+            const p = data[0];
+            paintPosition(p.symbol, p.quantity, p.avg_cost, null); // IBKR summary doesn't include live unrealized P/L here
+          })
+          .catch(() => paintNoPosition());
+      });
+  }
+
+  loadPositions();
+  setInterval(loadPositions, 15000);
 
   function renderPnlChart(svgEl, data, baseline){
     if(data.length < 2) return;
