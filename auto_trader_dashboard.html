@@ -512,6 +512,118 @@
   .toast-title{ font-size:12.5px; margin-bottom:2px; }
   .toast-time{ font-family:var(--font-mono); font-size:10px; color:var(--muted); }
 
+  /* =========================================================
+     SWISS / INTERNATIONAL TYPOGRAPHIC STYLE MODALS
+     Bold grotesk headline, strong horizontal rules, tight grid,
+     no gradients/shadows/rounded pill decoration — replaces the
+     native browser confirm() with something considered.
+  ========================================================= */
+  .modal-overlay{
+    display:none;
+    position:fixed; inset:0;
+    background:rgba(6,8,12,0.72);
+    z-index:200;
+    align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.open{ display:flex; }
+
+  .swiss-modal{
+    width:100%; max-width:400px;
+    background:var(--bg);
+    border:1px solid var(--text);
+    padding:0;
+  }
+  .swiss-rule{ height:2px; background:var(--text); }
+  .swiss-eyebrow{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--amber);
+    padding:16px 24px 0;
+  }
+  .swiss-title{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:32px;
+    letter-spacing:-0.5px;
+    padding:6px 24px 16px;
+    line-height:1.1;
+  }
+  .swiss-body{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    line-height:1.6;
+    color:var(--muted-2);
+    padding:0 24px 22px;
+  }
+  .swiss-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .swiss-btn{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:16px 0;
+    border:none;
+    cursor:pointer;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .swiss-btn.ghost{ border-right:1px solid var(--text); }
+  .swiss-btn.ghost:hover{ background:var(--panel-2); }
+  .swiss-btn.primary{ background:var(--amber); color:#0B0E14; font-weight:700; }
+  .swiss-btn.primary:hover{ filter:brightness(1.08); }
+  .swiss-btn.primary.sell{ background:var(--red); color:#1A0505; }
+
+  /* Order ticket specifics */
+  .order-modal{ max-width:420px; }
+  .order-field{ padding:0 24px 14px; }
+  .order-field label{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:10px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:7px;
+  }
+  .order-field select, .order-field input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:var(--font-mono);
+    font-size:13.5px;
+    padding:11px 12px;
+  }
+  .order-field select:focus, .order-field input:focus{ outline:none; border-color:var(--amber); }
+  .order-row-2{ display:grid; grid-template-columns:1.4fr 1fr; gap:14px; padding:0 24px; }
+  .order-row-2 .order-field{ padding:0 0 14px; }
+
+  .order-estimate{
+    display:flex; justify-content:space-between; align-items:baseline;
+    padding:14px 24px;
+    margin:0 24px 4px;
+    border-top:1px dashed var(--border);
+    border-bottom:1px dashed var(--border);
+    font-family:var(--font-mono);
+  }
+  .order-estimate span:first-child{ font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+  .order-estimate span:last-child{ font-size:16px; font-weight:600; color:var(--text); }
+
+  .order-msg{
+    padding:0 24px 12px;
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    min-height:14px;
+  }
+  .order-msg.error{ color:var(--red); }
+  .order-msg.ok{ color:var(--green); }
+
   /* Mobile (phones, incl. Android)  */
   @media (max-width:640px){
     .topbar{ padding:10px 12px; flex-wrap:wrap; gap:8px; }
@@ -867,6 +979,80 @@
     </div>
   </div>
 
+  <!-- ===== Logout confirmation — Swiss/International Typographic style ===== -->
+  <div class="modal-overlay" id="logoutOverlay">
+    <div class="swiss-modal">
+      <div class="swiss-rule"></div>
+      <div class="swiss-eyebrow">01 / SESSION</div>
+      <h2 class="swiss-title">Log out?</h2>
+      <p class="swiss-body">You'll need to sign back in to view your dashboard, positions, and trade history.</p>
+      <div class="swiss-rule"></div>
+      <div class="swiss-actions">
+        <button class="swiss-btn ghost" id="logoutCancelBtn">Cancel</button>
+        <button class="swiss-btn primary" id="logoutConfirmBtn">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Order ticket — Buy/Sell modal ===== -->
+  <div class="modal-overlay" id="orderOverlay">
+    <div class="swiss-modal order-modal">
+      <div class="swiss-rule"></div>
+      <div class="swiss-eyebrow" id="orderEyebrow">02 / ORDER TICKET</div>
+      <h2 class="swiss-title"><span id="orderSideLabel">Buy</span></h2>
+
+      <div class="order-field">
+        <label for="orderSymbol">Symbol</label>
+        <select id="orderSymbol">
+          <option value="AAPL">AAPL — Apple Inc.</option>
+          <option value="MSFT">MSFT — Microsoft Corp.</option>
+          <option value="TSLA">TSLA — Tesla Inc.</option>
+          <option value="NVDA">NVDA — NVIDIA Corp.</option>
+          <option value="SPY">SPY — S&amp;P 500 ETF</option>
+        </select>
+      </div>
+
+      <div class="order-row-2">
+        <div class="order-field">
+          <label for="orderQty">Quantity</label>
+          <input type="number" id="orderQty" min="0.0001" step="0.0001" value="1">
+        </div>
+        <div class="order-field">
+          <label for="orderCurrency">Currency</label>
+          <select id="orderCurrency">
+            <option value="USD">USD</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="order-field">
+        <label for="orderType">Order Type</label>
+        <select id="orderType">
+          <option value="MKT">Market</option>
+          <option value="LMT">Limit</option>
+        </select>
+      </div>
+
+      <div class="order-field" id="limitPriceField" style="display:none;">
+        <label for="orderLimitPrice">Limit Price (USD)</label>
+        <input type="number" id="orderLimitPrice" min="0.01" step="0.01" placeholder="0.00">
+      </div>
+
+      <div class="order-estimate">
+        <span>Estimated cost</span>
+        <span id="orderEstimate">—</span>
+      </div>
+
+      <div class="order-msg" id="orderMsg"></div>
+
+      <div class="swiss-rule"></div>
+      <div class="swiss-actions">
+        <button class="swiss-btn ghost" id="orderCancelBtn">Cancel</button>
+        <button class="swiss-btn primary" id="orderConfirmBtn">Place Order</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast-stack" id="toastStack"></div>
 
 <script>
@@ -1181,8 +1367,18 @@
   if (userEmailEl) userEmailEl.textContent = ATLAS_EMAIL || '';
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
-    if(!confirm('Log out of ATLAS?')) return;
+    document.getElementById('logoutOverlay').classList.add('open');
+  });
 
+  document.getElementById('logoutCancelBtn').addEventListener('click', () => {
+    document.getElementById('logoutOverlay').classList.remove('open');
+  });
+
+  document.getElementById('logoutOverlay').addEventListener('click', (e) => {
+    if(e.target.id === 'logoutOverlay') document.getElementById('logoutOverlay').classList.remove('open');
+  });
+
+  document.getElementById('logoutConfirmBtn').addEventListener('click', () => {
     fetch('/api/auth/logout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1204,14 +1400,14 @@
     pushNotification('info', running ? 'Bot stopped' : 'Bot resumed', 'Triggered manually from console');
   });
 
-  function executeManualTrade(side){
-    const symbol = 'AAPL';
-    const qty = 1;
+  function executeManualTrade(side, symbol, qty, orderType, limitPrice){
+    const body = { symbol, side: side.toUpperCase(), quantity: qty, order_type: orderType, token: ATLAS_TOKEN };
+    if(orderType === 'LMT') body.limit_price = limitPrice;
 
-    fetch('/api/alpaca/order', {
+    return fetch('/api/alpaca/order', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ symbol, side: side.toUpperCase(), quantity: qty, order_type: 'MKT', token: ATLAS_TOKEN })
+      body: JSON.stringify(body)
     })
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
@@ -1224,18 +1420,132 @@
         pushNotification(side, `Alpaca ${side} order ${data.status}`, `${qty} ${symbol} @ $${fillPrice.toFixed(2)}`);
 
         refreshBrokerStatus();
-        loadPositions(); // pull the real, updated position instead of guessing at it
+        loadPositions();
+        return { ok: true };
       })
       .catch(err => {
-        const simQty = Number((Math.random() * 0.02 + 0.005).toFixed(6));
+        const simQty = Number(qty) || Number((Math.random() * 0.02 + 0.005).toFixed(6));
         applyTradeToPriceFeed(side, price, simQty);
 
-        addLog(`${side.toUpperCase()} ${simQty} BTC-USD @ ${price.toFixed(2)} (simulated — Alpaca unreachable: ${err.message})`, 'ORDER');
-        pushNotification(side, `Simulated ${side} fill (Alpaca offline)`, `${simQty} BTC-USD @ $${price.toFixed(2)}`);
+        addLog(`${side.toUpperCase()} ${simQty} ${symbol} @ ${price.toFixed(2)} (simulated — Alpaca unreachable: ${err.message})`, 'ORDER');
+        pushNotification(side, `Simulated ${side} fill (Alpaca offline)`, `${simQty} ${symbol} @ $${price.toFixed(2)}`);
+        return { ok: false, error: err.message };
       });
   }
 
-  document.getElementById('manualBuyBtn').addEventListener('click', () => executeManualTrade('buy'));
+  /* =========================================================
+     ORDER TICKET MODAL — mirrors the "order ticket" pattern used
+     by Robinhood/Coinbase/most trading apps: pick symbol + qty,
+     see a live estimated cost before confirming, instead of
+     firing a silent hardcoded 1-share order on a single click.
+  ========================================================= */
+  let pendingSide = 'buy';
+  const orderOverlay = document.getElementById('orderOverlay');
+  const orderSymbolEl = document.getElementById('orderSymbol');
+  const orderQtyEl = document.getElementById('orderQty');
+  const orderTypeEl = document.getElementById('orderType');
+  const orderLimitPriceEl = document.getElementById('orderLimitPrice');
+  const orderEstimateEl = document.getElementById('orderEstimate');
+  const orderMsgEl = document.getElementById('orderMsg');
+  const orderConfirmBtn = document.getElementById('orderConfirmBtn');
+
+  let latestQuotePrice = null;
+
+  function openOrderModal(side){
+    pendingSide = side;
+    document.getElementById('orderSideLabel').textContent = side === 'buy' ? 'Buy' : 'Sell';
+    orderConfirmBtn.textContent = side === 'buy' ? 'Place Buy Order' : 'Place Sell Order';
+    orderConfirmBtn.className = 'swiss-btn primary' + (side === 'sell' ? ' sell' : '');
+    orderMsgEl.textContent = '';
+    orderMsgEl.className = 'order-msg';
+    orderQtyEl.value = 1;
+    orderTypeEl.value = 'MKT';
+    document.getElementById('limitPriceField').style.display = 'none';
+    refreshQuoteAndEstimate();
+    orderOverlay.classList.add('open');
+  }
+
+  function closeOrderModal(){
+    orderOverlay.classList.remove('open');
+  }
+
+  document.getElementById('manualBuyBtn').addEventListener('click', () => openOrderModal('buy'));
+  document.getElementById('manualSellBtn').addEventListener('click', () => openOrderModal('sell'));
+  document.getElementById('orderCancelBtn').addEventListener('click', closeOrderModal);
+  orderOverlay.addEventListener('click', (e) => { if(e.target.id === 'orderOverlay') closeOrderModal(); });
+
+  orderTypeEl.addEventListener('change', () => {
+    document.getElementById('limitPriceField').style.display = orderTypeEl.value === 'LMT' ? 'block' : 'none';
+    updateEstimate();
+  });
+
+  function refreshQuoteAndEstimate(){
+    const symbol = orderSymbolEl.value;
+    orderEstimateEl.textContent = 'Loading…';
+    fetch(`/api/alpaca/quote/${symbol}`)
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        if(!ok) throw new Error('quote unavailable');
+        latestQuotePrice = Number(data.mid ?? data.ask ?? data.bid);
+        updateEstimate();
+      })
+      .catch(() => {
+        latestQuotePrice = null;
+        updateEstimate();
+      });
+  }
+
+  function updateEstimate(){
+    const qty = Number(orderQtyEl.value) || 0;
+    const refPrice = orderTypeEl.value === 'LMT'
+      ? Number(orderLimitPriceEl.value) || latestQuotePrice
+      : latestQuotePrice;
+
+    if(refPrice && qty > 0){
+      orderEstimateEl.textContent = '$' + (refPrice * qty).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + ' USD';
+    }else{
+      orderEstimateEl.textContent = latestQuotePrice ? '—' : 'Quote unavailable';
+    }
+  }
+
+  orderSymbolEl.addEventListener('change', refreshQuoteAndEstimate);
+  orderQtyEl.addEventListener('input', updateEstimate);
+  orderLimitPriceEl.addEventListener('input', updateEstimate);
+
+  orderConfirmBtn.addEventListener('click', () => {
+    const symbol = orderSymbolEl.value;
+    const qty = Number(orderQtyEl.value);
+    const orderType = orderTypeEl.value;
+    const limitPrice = orderType === 'LMT' ? Number(orderLimitPriceEl.value) : undefined;
+
+    if(!qty || qty <= 0){
+      orderMsgEl.textContent = 'Enter a quantity greater than 0.';
+      orderMsgEl.className = 'order-msg error';
+      return;
+    }
+    if(orderType === 'LMT' && (!limitPrice || limitPrice <= 0)){
+      orderMsgEl.textContent = 'Enter a valid limit price.';
+      orderMsgEl.className = 'order-msg error';
+      return;
+    }
+
+    orderConfirmBtn.disabled = true;
+    orderMsgEl.textContent = 'Placing order…';
+    orderMsgEl.className = 'order-msg';
+
+    executeManualTrade(pendingSide, symbol, qty, orderType, limitPrice).then(result => {
+      orderConfirmBtn.disabled = false;
+      if(result.ok){
+        orderMsgEl.textContent = 'Order placed.';
+        orderMsgEl.className = 'order-msg ok';
+        setTimeout(closeOrderModal, 700);
+      }else{
+        orderMsgEl.textContent = `Sent as a simulated fill (Alpaca unreachable: ${result.error}).`;
+        orderMsgEl.className = 'order-msg error';
+        setTimeout(closeOrderModal, 1400);
+      }
+    });
+  });
 
   function setBrokerStatus(dotId, detailId, connected, detailText){
     document.getElementById(dotId).className = 'broker-dot ' + (connected ? 'connected' : 'error');
@@ -1297,7 +1607,6 @@
 
   refreshBrokerStatus();
   setInterval(refreshBrokerStatus, 15000);
-  document.getElementById('manualSellBtn').addEventListener('click', () => executeManualTrade('sell'));
 
   /* =========================================================
      OPEN POSITION — pulls the real position from Alpaca (falling
