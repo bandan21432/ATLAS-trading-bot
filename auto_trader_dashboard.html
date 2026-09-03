@@ -624,6 +624,44 @@
   .order-msg.error{ color:var(--red); }
   .order-msg.ok{ color:var(--green); }
 
+  .broker-mode-toggle{ display:flex; gap:1px; background:var(--border); border:1px solid var(--border); }
+  .mode-btn{
+    flex:1;
+    background:var(--panel-2);
+    color:var(--muted-2);
+    border:none;
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    letter-spacing:0.5px;
+    padding:11px 4px;
+    cursor:pointer;
+  }
+  .mode-btn.active{ background:var(--amber); color:#1A1305; font-weight:700; }
+  #modeLiveBtn.active{ background:var(--red); color:#1A0505; }
+
+  .live-warning{
+    margin:0 24px 16px;
+    padding:14px;
+    border:1.5px solid var(--red);
+    background:rgba(229,72,77,0.08);
+    font-family:var(--font-body);
+    font-size:12px;
+    line-height:1.6;
+    color:var(--text);
+  }
+  .live-warning strong{ display:block; color:var(--red); margin-bottom:6px; font-size:12.5px; }
+  .live-confirm-row{
+    display:flex;
+    align-items:flex-start;
+    gap:8px;
+    margin-top:10px;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--muted-2);
+    cursor:pointer;
+  }
+  .live-confirm-row input{ margin-top:2px; flex-shrink:0; }
+
   /* Mobile (phones, incl. Android)  */
   @media (max-width:640px){
     .topbar{ padding:10px 12px; flex-wrap:wrap; gap:8px; }
@@ -788,7 +826,10 @@
             </div>
 
             <div class="panel-block">
-              <h3>Broker</h3>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <h3 style="margin:0;">Broker</h3>
+                <button id="openBrokerSettingsBtn" style="background:none; border:1px solid var(--border); color:var(--muted-2); font-family:var(--font-mono); font-size:10px; letter-spacing:0.5px; text-transform:uppercase; padding:5px 10px; border-radius:4px; cursor:pointer;">Manage</button>
+              </div>
               <div class="broker-row">
                 <div class="broker-name"><span class="broker-dot" id="alpacaDot"></span>Alpaca</div>
                 <div class="broker-detail" id="alpacaDetail">Checking…</div>
@@ -796,6 +837,9 @@
               <div class="broker-row">
                 <div class="broker-name"><span class="broker-dot" id="ibkrDot"></span>IBKR</div>
                 <div class="broker-detail" id="ibkrDetail">Checking…</div>
+              </div>
+              <div style="font-family:var(--font-mono); font-size:9.5px; color:var(--muted); margin-top:8px; line-height:1.5;">
+                IBKR requires TWS/IB Gateway on this server's machine — not available for other users, owner-only.
               </div>
             </div>
 
@@ -1049,6 +1093,56 @@
       <div class="swiss-actions">
         <button class="swiss-btn ghost" id="orderCancelBtn">Cancel</button>
         <button class="swiss-btn primary" id="orderConfirmBtn">Place Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Broker Settings — connect your own Alpaca account ===== -->
+  <div class="modal-overlay" id="brokerOverlay">
+    <div class="swiss-modal order-modal">
+      <div class="swiss-rule"></div>
+      <div class="swiss-eyebrow">03 / BROKER SETTINGS</div>
+      <h2 class="swiss-title">Connect Alpaca</h2>
+      <p class="swiss-body" style="padding-top:0;">Your API keys are encrypted and used only for your own trades — nobody else can see or use them.</p>
+
+      <div class="order-field" id="brokerCurrentStatus" style="display:none;">
+        <label>Current Connection</label>
+        <div id="brokerStatusText" style="font-family:var(--font-mono); font-size:13px; padding:10px 0;"></div>
+      </div>
+
+      <div class="order-field">
+        <label>Account Type</label>
+        <div class="broker-mode-toggle">
+          <button type="button" class="mode-btn active" id="modePaperBtn" data-mode="paper">Paper (Practice)</button>
+          <button type="button" class="mode-btn" id="modeLiveBtn" data-mode="live">Live (Real Money)</button>
+        </div>
+      </div>
+
+      <div class="live-warning" id="liveWarning" style="display:none;">
+        <strong>⚠ Live trading — real money.</strong>
+        Orders placed here use real funds in your actual Alpaca account. ATLAS is a personal/learning project — trade at your own risk.
+        <label class="live-confirm-row">
+          <input type="checkbox" id="liveConfirmCheckbox">
+          I understand this connects to my real funded account and will place real trades with real money.
+        </label>
+      </div>
+
+      <div class="order-field">
+        <label for="brokerApiKey">API Key</label>
+        <input type="text" id="brokerApiKey" placeholder="PK...">
+      </div>
+      <div class="order-field">
+        <label for="brokerSecretKey">Secret Key</label>
+        <input type="password" id="brokerSecretKey" placeholder="Your Alpaca secret key">
+      </div>
+
+      <div class="order-msg" id="brokerMsg"></div>
+
+      <div class="swiss-rule"></div>
+      <div class="swiss-actions" style="grid-template-columns:1fr 1fr 1fr;">
+        <button class="swiss-btn ghost" id="brokerCloseBtn">Close</button>
+        <button class="swiss-btn ghost" id="brokerDisconnectBtn" style="display:none;">Disconnect</button>
+        <button class="swiss-btn primary" id="brokerConnectBtn">Connect</button>
       </div>
     </div>
   </div>
@@ -1392,6 +1486,136 @@
       });
   });
 
+  /* =========================================================
+     BROKER SETTINGS — each user connects their own Alpaca account
+     (paper or live). Keys are sent once to save (encrypted server-
+     side) and never re-displayed. Live mode requires an explicit
+     confirmation checkbox before Connect is enabled — this is real
+     money, so no accidental one-click live connections.
+  ========================================================= */
+  const brokerOverlay = document.getElementById('brokerOverlay');
+  const brokerMsgEl = document.getElementById('brokerMsg');
+  const brokerConnectBtn = document.getElementById('brokerConnectBtn');
+  const brokerDisconnectBtn = document.getElementById('brokerDisconnectBtn');
+  const liveWarningEl = document.getElementById('liveWarning');
+  const liveConfirmCheckbox = document.getElementById('liveConfirmCheckbox');
+  let brokerSelectedMode = 'paper';
+
+  function openBrokerSettings(){
+    brokerMsgEl.textContent = '';
+    brokerMsgEl.className = 'order-msg';
+    document.getElementById('brokerApiKey').value = '';
+    document.getElementById('brokerSecretKey').value = '';
+    liveConfirmCheckbox.checked = false;
+    setBrokerMode('paper');
+
+    fetch(`/api/broker/alpaca/status?token=${ATLAS_TOKEN}`)
+      .then(r => r.json())
+      .then(data => {
+        const statusBlock = document.getElementById('brokerCurrentStatus');
+        const statusText = document.getElementById('brokerStatusText');
+        if(data.connected){
+          statusBlock.style.display = 'block';
+          statusText.textContent = `Connected — ${data.is_paper ? 'Paper' : 'LIVE (real money)'} account`;
+          statusText.style.color = data.is_paper ? 'var(--green)' : 'var(--red)';
+          brokerDisconnectBtn.style.display = 'block';
+        }else{
+          statusBlock.style.display = 'none';
+          brokerDisconnectBtn.style.display = 'none';
+        }
+      })
+      .catch(() => {
+        document.getElementById('brokerCurrentStatus').style.display = 'none';
+        brokerDisconnectBtn.style.display = 'none';
+      });
+
+    brokerOverlay.classList.add('open');
+  }
+
+  function closeBrokerSettings(){ brokerOverlay.classList.remove('open'); }
+
+  document.getElementById('openBrokerSettingsBtn').addEventListener('click', openBrokerSettings);
+  document.getElementById('brokerCloseBtn').addEventListener('click', closeBrokerSettings);
+  brokerOverlay.addEventListener('click', (e) => { if(e.target.id === 'brokerOverlay') closeBrokerSettings(); });
+
+  function setBrokerMode(mode){
+    brokerSelectedMode = mode;
+    document.getElementById('modePaperBtn').classList.toggle('active', mode === 'paper');
+    document.getElementById('modeLiveBtn').classList.toggle('active', mode === 'live');
+    liveWarningEl.style.display = mode === 'live' ? 'block' : 'none';
+    updateBrokerConnectEnabled();
+  }
+  document.getElementById('modePaperBtn').addEventListener('click', () => setBrokerMode('paper'));
+  document.getElementById('modeLiveBtn').addEventListener('click', () => setBrokerMode('live'));
+
+  function updateBrokerConnectEnabled(){
+    // Paper mode: always enabled. Live mode: locked until the user
+    // explicitly checks the "I understand" box — no accidental live connects.
+    brokerConnectBtn.disabled = (brokerSelectedMode === 'live' && !liveConfirmCheckbox.checked);
+  }
+  liveConfirmCheckbox.addEventListener('change', updateBrokerConnectEnabled);
+
+  brokerDisconnectBtn.addEventListener('click', () => {
+    if(!confirm('Disconnect your Alpaca account from ATLAS?')) return;
+    fetch('/api/broker/alpaca/disconnect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ token: ATLAS_TOKEN })
+    }).then(() => {
+      openBrokerSettings(); // refresh the status view
+      refreshBrokerStatus();
+      pushNotification('info', 'Alpaca disconnected', 'Your broker connection was removed.');
+    });
+  });
+
+  brokerConnectBtn.addEventListener('click', () => {
+    const apiKey = document.getElementById('brokerApiKey').value.trim();
+    const secretKey = document.getElementById('brokerSecretKey').value.trim();
+
+    if(!apiKey || !secretKey){
+      brokerMsgEl.textContent = 'Enter both your API key and secret key.';
+      brokerMsgEl.className = 'order-msg error';
+      return;
+    }
+    if(brokerSelectedMode === 'live' && !liveConfirmCheckbox.checked){
+      brokerMsgEl.textContent = 'Please confirm you understand this uses real money.';
+      brokerMsgEl.className = 'order-msg error';
+      return;
+    }
+
+    brokerConnectBtn.disabled = true;
+    brokerMsgEl.textContent = 'Verifying credentials with Alpaca…';
+    brokerMsgEl.className = 'order-msg';
+
+    fetch('/api/broker/alpaca/connect', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        token: ATLAS_TOKEN,
+        api_key: apiKey,
+        secret_key: secretKey,
+        is_paper: brokerSelectedMode === 'paper',
+      })
+    })
+      .then(r => r.json().then(data => ({ ok: r.ok, data })))
+      .then(({ ok, data }) => {
+        updateBrokerConnectEnabled();
+        if(!ok) throw new Error(data.detail || 'Could not connect');
+
+        brokerMsgEl.textContent = `Connected! Account equity: $${Number(data.equity).toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2})}`;
+        brokerMsgEl.className = 'order-msg ok';
+        pushNotification('info', 'Alpaca connected', `${brokerSelectedMode === 'paper' ? 'Paper' : 'Live'} account linked`);
+        refreshBrokerStatus();
+        loadPositions();
+        setTimeout(closeBrokerSettings, 1200);
+      })
+      .catch(err => {
+        brokerConnectBtn.disabled = false;
+        brokerMsgEl.textContent = err.message;
+        brokerMsgEl.className = 'order-msg error';
+      });
+  });
+
   document.getElementById('botToggle').addEventListener('click', function(){
     const running = !this.classList.contains('stopped');
     this.classList.toggle('stopped');
@@ -1482,7 +1706,7 @@
   function refreshQuoteAndEstimate(){
     const symbol = orderSymbolEl.value;
     orderEstimateEl.textContent = 'Loading…';
-    fetch(`/api/alpaca/quote/${symbol}`)
+    fetch(`/api/alpaca/quote/${symbol}?token=${ATLAS_TOKEN}`)
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
         if(!ok) throw new Error('quote unavailable');
@@ -1573,19 +1797,19 @@
   }
 
   function refreshBrokerStatus(){
-    fetch('/api/alpaca/account')
+    fetch(`/api/alpaca/account?token=${ATLAS_TOKEN}`)
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
         if(!ok) throw new Error(data.detail || 'unavailable');
         setBrokerStatus('alpacaDot', 'alpacaDetail', true,
-          '$' + data.equity.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) + (data.paper ? ' (paper)' : ''));
+          '$' + data.equity.toLocaleString(undefined,{minimumFractionDigits:2, maximumFractionDigits:2}) + (data.paper ? ' (paper)' : ' (LIVE)'));
 
         const equity = Number(data.equity);
         const basis = Number(data.last_equity ?? data.previous_equity ?? STARTING_EQUITY);
-        applyBalanceToHeader('alpaca', equity, basis, 'ALPACA PAPER BALANCE');
+        applyBalanceToHeader('alpaca', equity, basis, data.paper ? 'ALPACA PAPER BALANCE' : 'ALPACA LIVE BALANCE');
       })
       .catch(() => {
-        setBrokerStatus('alpacaDot', 'alpacaDetail', false, 'Not connected');
+        setBrokerStatus('alpacaDot', 'alpacaDetail', false, 'Not set up — tap Manage');
         if(activeBalanceSource === 'alpaca') activeBalanceSource = null; // let IBKR take over on next successful fetch
       });
 
@@ -1639,7 +1863,7 @@
   }
 
   function loadPositions(){
-    fetch('/api/alpaca/positions')
+    fetch(`/api/alpaca/positions?token=${ATLAS_TOKEN}`)
       .then(r => r.json().then(data => ({ ok: r.ok, data })))
       .then(({ ok, data }) => {
         if(!ok) throw new Error('alpaca positions unavailable');
