@@ -10,3 +10,6 @@ numpy
 scikit-learn
 matplotlib
 groq
+python-dotenv
+requests
+cryptography
